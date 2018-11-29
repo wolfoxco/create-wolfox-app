@@ -70,13 +70,16 @@ const frontendPackages = {
 }
 
 const createFolder = (folderName, overwrite) => {
-  try { if (overwrite) { rm(folderName) } } catch (error) {}
+  try { if (overwrite) { rm(folderName) } } catch (error) {} // eslint-disable-line
   return fs.mkdirSync(folderName)
 }
 
-const initSrc = templateDirectory => {
-  fs.copySync(`${templateDirectory}/src`, 'src')
+const copyFolder = (templateDirectory, directoryName) => {
+  fs.copySync(`${templateDirectory}/${directoryName}`, directoryName)
 }
+
+const initSrc = templateDirectory => copyFolder(templateDirectory, 'src')
+const initConfig = templateDirectory => copyFolder(templateDirectory, 'config')
 const initGit = () => exec('git init')
 
 const fixPackageJSON = templateDirectory => {
@@ -138,6 +141,7 @@ const createFrontendFolder = (name, options) => {
   createFolder(folderName, options.overwrite)
   inFolder(folderName, () => {
     initSrc(templateDirectory)
+    initConfig(templateDirectory)
     initGit()
     initPackageJSON(frontendPackages, templateDirectory)
     initEslint(templateDirectory)
