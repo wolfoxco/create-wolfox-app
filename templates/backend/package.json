@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "start": "node src/main.js",
+    "dev": "nodemon src/main.js"
+  }
+}
