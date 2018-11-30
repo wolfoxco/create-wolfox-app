@@ -4,7 +4,12 @@ const program = require('commander')
 const fs = require('fs-extra')
 const path = require('path')
 const execSync = require('child_process').execSync
-const rm = require('rimraf').sync
+const chalk = require('chalk')
+const readlineSync = require('readline-sync')
+
+const packages = require('./packages')
+const utils = require('./utils')
+
 const exec = command => execSync(command, { stdio: 'inherit' })
 
 const waitParsing = () => new Promise(resolve => {
@@ -20,68 +25,30 @@ const waitParsing = () => new Promise(resolve => {
   program.parse(process.argv)
 })
 
-const solver = ({ name, options }) => {
+const resolveAction = ({ name, options }) => {
   if (options.backendOnly && options.frontendOnly) {
     program.help()
   }
-  if (!options.backendOnly) {
-    createBackendFolder(name, options)
+  if (options.overwrite) {
+    const answer = readlineSync.question(chalk.bold.red(`You're about to overwrite your folders ${name}-back and ${name}-front if they exists. Are you sure you want to do it? [yN] `), {
+      limit: [ 'y', 'n' ],
+      defaultInput: 'n'
+    })
+    if (answer === 'y') {
+      if (!options.backendOnly) {
+        createBackendFolder(name, options)
+      }
+      if (!options.frontendOnly) {
+        createFrontendFolder(name, options)
+      }
+    }
   }
-  if (!options.frontendOnly) {
-    createFrontendFolder(name, options)
-  }
 }
 
-const backendPackages = {
-  main: [
-    "@frenchpastries/arrange",
-    "@frenchpastries/assemble",
-    "@frenchpastries/millefeuille",
-    "dotenv",
-    "pg"
-  ],
-  dev: [
-    "eslint",
-    "nodemon"
-  ]
-}
-
-const frontendPackages = {
-  main: [
-    "hyperapp",
-    "hyperapp-style"
-  ],
-  dev: [
-    "@babel/core",
-    "@babel/plugin-syntax-dynamic-import",
-    "@babel/plugin-transform-react-jsx",
-    "@babel/preset-env",
-    "babel-eslint",
-    "babel-loader",
-    "clean-webpack-plugin",
-    "eslint",
-    "eslint-plugin-react",
-    "file-loader",
-    "html-webpack-plugin",
-    "hyperapp-redux-devtools",
-    "webpack",
-    "webpack-cli",
-    "webpack-dev-server",
-    "webpack-merge"
-  ]
-}
-
-const createFolder = (folderName, overwrite) => {
-  try { if (overwrite) { rm(folderName) } } catch (error) {} // eslint-disable-line
-  return fs.mkdirSync(folderName)
-}
-
-const copyFolder = (templateDirectory, directoryName) => {
-  fs.copySync(`${templateDirectory}/${directoryName}`, directoryName)
-}
-
-const initSrc = templateDirectory => copyFolder(templateDirectory, 'src')
-const initConfig = templateDirectory => copyFolder(templateDirectory, 'config')
+const initEslint = utils.initStaticFile('.eslintrc.json')
+const initBabel  = utils.initStaticFile('.babelrc')
+const initSrc    = utils.copyFolder('src')
+const initConfig = utils.copyFolder('config')
 const initGit = () => exec('git init')
 
 const fixPackageJSON = templateDirectory => {
@@ -107,50 +74,34 @@ const initPackageJSON = (packages, templateDirectory) => {
   fixPackageJSON(templateDirectory)
 }
 
-const inFolder = (folderName, execution) => {
-  process.chdir(folderName)
-  const res = execution()
-  process.chdir('../')
-  return res
-}
-
-const initStaticFile = (filePath, fileName) => {
-  const staticFile = fs.readFileSync(`${filePath}/${fileName}`, 'utf8')
-  return fs.writeFileSync(`${process.cwd()}/${fileName}`, staticFile)
-}
-
-const initEslint = filePath => initStaticFile(filePath, '.eslintrc.json')
-
 const createBackendFolder = (name, options) => {
   const folderName = `${name}-back`
   const templateDirectory = path.resolve(__dirname, '..', 'templates', 'backend')
 
-  createFolder(folderName, options.overwrite)
-  inFolder(folderName, () => {
+  utils.createFolder(folderName, options.overwrite)
+  utils.inFolder(folderName, () => {
     initSrc(templateDirectory)
     initGit()
-    initPackageJSON(backendPackages, templateDirectory)
+    initPackageJSON(packages.backend, templateDirectory)
     initEslint(templateDirectory)
   })
 }
-
-const initBabel = filePath => initStaticFile(filePath, '.babelrc')
 
 const createFrontendFolder = (name, options) => {
   const folderName = `${name}-front`
   const templateDirectory = path.resolve(__dirname, '..', 'templates', 'frontend')
 
-  createFolder(folderName, options.overwrite)
-  inFolder(folderName, () => {
+  utils.createFolder(folderName, options.overwrite)
+  utils.inFolder(folderName, () => {
     initSrc(templateDirectory)
     initConfig(templateDirectory)
     initGit()
-    initPackageJSON(frontendPackages, templateDirectory)
+    initPackageJSON(packages.frontend, templateDirectory)
     initEslint(templateDirectory)
     initBabel(templateDirectory)
   })
 }
 
 waitParsing()
-  .then(solver)
-  .catch(console.error)
+  .then(resolveAction)
+  .catch(() => {})
