@@ -4,7 +4,7 @@ const HTMLWebpackPlugin = require('html-webpack-plugin')
 const CleanWebpackPlugin = require('clean-webpack-plugin')
 
 module.exports = {
-  entry: './src/front/index.js',
+  entry: './src/index.js',
   output: {
     filename: 'index.js',
     path: path.resolve(process.cwd(), 'dist')
