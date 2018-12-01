@@ -91,28 +91,36 @@ const createBackendProject = (name, options) => {
   const folderName = `${name}-back`
   const templateDirectory = path.resolve(__dirname, '..', 'templates', 'backend')
 
-  utils.createFolder(folderName, options.overwrite)
-  utils.inFolder(folderName, () => {
-    initSrc(templateDirectory)
-    initGit()
-    initPackageJSON(packages.backend, templateDirectory)
-    initEslint(templateDirectory)
-  })
+  const goOn = utils.createFolder(folderName, options.overwrite)
+  if (goOn) {
+    utils.inFolder(folderName, () => {
+      initSrc(templateDirectory)
+      initGit()
+      initPackageJSON(packages.backend, templateDirectory)
+      initEslint(templateDirectory)
+    })
+  } else {
+    console.log(chalk.red(`Folder ${folderName}  already exists. Skipping generation.`))
+  }
 }
 
 const createFrontendProject = (name, options) => {
   const folderName = `${name}-front`
   const templateDirectory = path.resolve(__dirname, '..', 'templates', 'frontend')
 
-  utils.createFolder(folderName, options.overwrite)
-  utils.inFolder(folderName, () => {
-    initSrc(templateDirectory)
-    initConfig(templateDirectory)
-    initGit()
-    initPackageJSON(packages.frontend, templateDirectory)
-    initEslint(templateDirectory)
-    initBabel(templateDirectory)
-  })
+  const goOn = utils.createFolder(folderName, options.overwrite)
+  if (goOn) {
+    utils.inFolder(folderName, () => {
+      initSrc(templateDirectory)
+      initConfig(templateDirectory)
+      initGit()
+      initPackageJSON(packages.frontend, templateDirectory)
+      initEslint(templateDirectory)
+      initBabel(templateDirectory)
+    })
+  } else {
+    console.log(chalk.red(`Folder ${folderName} already exists. Skipping generation.`))
+  }
 }
 
 waitParsing()

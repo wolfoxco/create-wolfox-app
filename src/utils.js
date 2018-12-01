@@ -6,10 +6,15 @@ const createFolder = (folderName, force) => {
     if (force) {
       rm(folderName)
     }
+    fs.mkdirSync(folderName)
   } catch (error) {
-    // Nothing's happening here, and that's completely what we want.
+    if (error.syscall === 'mkdir') {
+      return false
+    } else {
+      return true
+    }
   }
-  return fs.mkdirSync(folderName)
+  return true
 }
 
 const copyFolder = directoryName => templateDirectory => {
