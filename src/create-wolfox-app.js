@@ -9,8 +9,11 @@ const readlineSync = require('readline-sync')
 
 const packages = require('./packages')
 const utils = require('./utils')
+const message = require('./message')
 
-const exec = command => execSync(command, { stdio: 'inherit' })
+const execVerbose = verbose => command => execSync(command, { stdio: verbose ? 'inherit' : 'ignore' })
+
+let exec = execVerbose(false)
 
 const waitParsing = () => new Promise(resolve => {
   program
@@ -19,14 +22,12 @@ const waitParsing = () => new Promise(resolve => {
     .option('-b, --backend-only', 'Build only backend project')
     .option('-f, --frontend-only', 'Build only frontend project')
     .option('--overwrite', 'Overwrite any existing folder')
+    .option('-v, --verbose', 'Make program verbose')
     .action((name, options) => resolve({ name, options }))
   program.parse(process.argv)
 })
 
-const overwriteQuestion = name => `
-You're about to overwrite your folders
-${name}-back and ${name}-front if they exists.
-Are you sure you want to do it? [yN] `.replace(/\n/g, '')
+const overwriteQuestion = name => `You're about to overwrite your folders ${name}-back and ${name}-front if they exists. Are you sure you want to do it? [yN] `
 
 const askQuestion = name => {
   const redText = chalk.bold.red(overwriteQuestion(name))
@@ -37,12 +38,16 @@ const askQuestion = name => {
 }
 
 const createProjects = (name, options) => {
+  if (options.verbose) {
+    exec = execVerbose(true)
+  }
   if (!options.backendOnly) {
     createBackendProject(name, options)
   }
   if (!options.frontendOnly) {
     createFrontendProject(name, options)
   }
+  message.congrats('Projects initialized! Start right now!')
 }
 
 const resolveAction = ({ name, options }) => {
@@ -91,16 +96,27 @@ const createBackendProject = (name, options) => {
   const folderName = `${name}-back`
   const templateDirectory = path.resolve(__dirname, '..', 'templates', 'backend')
 
+  message.info(`Generating backend ${folderName} project. This can take a while depending on your internet connection.`)
+
   const goOn = utils.createFolder(folderName, options.overwrite)
   if (goOn) {
+    message.info(`Folder ${folderName} has been created. Populating it.`)
     utils.inFolder(folderName, () => {
+      message.info('Source folder initialization...')
       initSrc(templateDirectory)
+      message.info(`Source folder initialized.`)
+      message.info('Git initialization...')
       initGit()
+      message.info(`Git initialized.`)
+      message.info('package.json initialization...')
       initPackageJSON(packages.backend, templateDirectory)
+      message.info(`package.json initialized.`)
+      message.info('Eslint initialization...')
       initEslint(templateDirectory)
+      message.info(`Eslint initialized.`)
     })
   } else {
-    console.log(chalk.red(`Folder ${folderName}  already exists. Skipping generation.`))
+    message.warning(`Folder ${folderName}  already exists. Skipping generation.`)
   }
 }
 
@@ -108,18 +124,33 @@ const createFrontendProject = (name, options) => {
   const folderName = `${name}-front`
   const templateDirectory = path.resolve(__dirname, '..', 'templates', 'frontend')
 
+  message.info(`Generating frontend ${folderName} project. This can take a while depending on your internet connection.`)
+
   const goOn = utils.createFolder(folderName, options.overwrite)
   if (goOn) {
+    message.info(`Folder ${folderName} has been created. Populating it.`)
     utils.inFolder(folderName, () => {
+      message.info('Source folder initialization...')
       initSrc(templateDirectory)
+      message.info(`Source folder initialized.`)
+      message.info('Webpack initialization...')
       initConfig(templateDirectory)
+      message.info(`Webpack initialized.`)
+      message.info('Git initialization...')
       initGit()
+      message.info(`Git initialized.`)
+      message.info('package.json initialization...')
       initPackageJSON(packages.frontend, templateDirectory)
+      message.info(`package.json initialized.`)
+      message.info('Eslint initialization...')
       initEslint(templateDirectory)
+      message.info(`Eslint initialized.`)
+      message.info('Babel and Hyperapp initialization...')
       initBabel(templateDirectory)
+      message.info(`Babel and Hyperapp initialized.`)
     })
   } else {
-    console.log(chalk.red(`Folder ${folderName} already exists. Skipping generation.`))
+    message.warning(`Folder ${folderName} already exists. Skipping generation.`)
   }
 }
 
