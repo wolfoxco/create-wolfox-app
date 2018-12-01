@@ -23,24 +23,39 @@ const waitParsing = () => new Promise(resolve => {
   program.parse(process.argv)
 })
 
+const overwriteQuestion = name => `
+You're about to overwrite your folders
+${name}-back and ${name}-front if they exists.
+Are you sure you want to do it? [yN] `.replace(/\n/g, '')
+
+const askQuestion = name => {
+  const redText = chalk.bold.red(overwriteQuestion(name))
+  return readlineSync.question(redText, {
+    limit: [ 'y', 'n' ],
+    defaultInput: 'n'
+  })
+}
+
+const createProjects = (name, options) => {
+  if (!options.backendOnly) {
+    createBackendProject(name, options)
+  }
+  if (!options.frontendOnly) {
+    createFrontendProject(name, options)
+  }
+}
+
 const resolveAction = ({ name, options }) => {
   if (options.backendOnly && options.frontendOnly) {
     program.help()
   }
   if (options.overwrite) {
-    const answer = readlineSync.question(chalk.bold.red(`You're about to overwrite your folders ${name}-back and ${name}-front if they exists. Are you sure you want to do it? [yN] `), {
-      limit: [ 'y', 'n' ],
-      defaultInput: 'n'
-    })
-    if (answer === 'y') {
-      if (!options.backendOnly) {
-        createBackendFolder(name, options)
-      }
-      if (!options.frontendOnly) {
-        createFrontendFolder(name, options)
-      }
+    const answer = askQuestion(name)
+    if (answer === 'n' || answer === 'N') {
+      process.exit()
     }
   }
+  createProjects(name, options)
 }
 
 const initEslint = utils.initStaticFile('.eslintrc.json')
@@ -72,7 +87,7 @@ const initPackageJSON = (packages, templateDirectory) => {
   fixPackageJSON(templateDirectory)
 }
 
-const createBackendFolder = (name, options) => {
+const createBackendProject = (name, options) => {
   const folderName = `${name}-back`
   const templateDirectory = path.resolve(__dirname, '..', 'templates', 'backend')
 
@@ -85,7 +100,7 @@ const createBackendFolder = (name, options) => {
   })
 }
 
-const createFrontendFolder = (name, options) => {
+const createFrontendProject = (name, options) => {
   const folderName = `${name}-front`
   const templateDirectory = path.resolve(__dirname, '..', 'templates', 'frontend')
 
