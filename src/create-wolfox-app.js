@@ -19,9 +19,7 @@ const waitParsing = () => new Promise(resolve => {
     .option('-b, --backend-only', 'Build only backend project')
     .option('-f, --frontend-only', 'Build only frontend project')
     .option('--overwrite', 'Overwrite any existing folder')
-    .action((name, options) => {
-      resolve({ name, options })
-    })
+    .action((name, options) => resolve({ name, options }))
   program.parse(process.argv)
 })
 
