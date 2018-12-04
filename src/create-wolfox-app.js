@@ -27,7 +27,7 @@ const waitParsing = () => new Promise(resolve => {
   program.parse(process.argv)
 })
 
-const overwriteQuestion = name => `You're about to overwrite your folders ${name}-back and ${name}-front if they exists. Are you sure you want to do it? [yN] `
+const overwriteQuestion = name => `You're about to overwrite your folders ${name}-core and ${name}-front if they exists. Are you sure you want to do it? [yN] `
 
 const askQuestion = name => {
   const redText = chalk.bold.red(overwriteQuestion(name))
@@ -93,7 +93,7 @@ const initPackageJSON = (packages, templateDirectory) => {
 }
 
 const createBackendProject = (name, options) => {
-  const folderName = `${name}-back`
+  const folderName = `${name}-core`
   const templateDirectory = path.resolve(__dirname, '..', 'templates', 'backend')
 
   message.info(`Generating backend ${folderName} project. This can take a while depending on your internet connection.`)
